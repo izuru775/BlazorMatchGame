@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using System.Timers
+@inject NavigationManager NavigationManager
 
 <style>
     .container {
@@ -15,7 +16,7 @@
 
 <div class="container">
     <div class="row">
-        @for(var animalNumber =0; animalNumber < shuffledAnimals.Count; animalNumber++)
+        @for (var animalNumber = 0; animalNumber < shuffledAnimals.Count; animalNumber++)
         {
             var animal = shuffledAnimals[animalNumber];
             var uniqueDescription = $"Button #{animalNumber}";
@@ -34,6 +35,10 @@
     <div class="row">
         <h2>Time:@timeDisplay</h2>
     </div>
+    <br />
+    <div class="row">
+        <h2>Pervious Time:@bestTimeDisplay</h2>
+    </div>
 </div>
 
 
@@ -50,19 +55,32 @@
             "🐯", "🐯",
             "🐹", "🐹",
     };
-
+    List<string> animalEmoji1 = new List<string>()
+    {
+            "🐔", "🐔",
+            "🐸", "🐸",
+            "🐵", "🐵",
+            "🐧", "🐧",
+            "🐗", "🐗",
+            "🐼", "🐼",
+            "🐨", "🐨",
+            "🐷", "🐷",
+    };
+    List<string> animalEmojis = new List<string>();
 
     List<string> shuffledAnimals = new List<string>();
 
     int matchesFound = 0;
     // Timer related variables
     Timer timer;
-    int tenthsOfSecondsElapsed = 0;
+    string bestTimeDisplay = "";
+    int tenthsOfSecondsElapsed = 100;
     string timeDisplay;
-
+    int listCount = 0;
     protected override void OnInitialized()
     {
         // Telling timer how frequently to tick and what method to call
+        
         timer = new Timer(100);
         timer.Elapsed += Timer_Tick;
 
@@ -70,14 +88,25 @@
     }
     private void SetUpGame()
     {
+        bestTimeDisplay = (tenthsOfSecondsElapsed / 10F).ToString("0.0s");
         Random random = new Random();
+        if (listCount == 1)
+        {
+            animalEmojis = animalEmoji1;
 
-        shuffledAnimals = animalEmoji
+        }
+        else
+        {
+            shuffledAnimals = animalEmoji;
+            animalEmojis = animalEmoji;
+            listCount = 0;
+        }
+        shuffledAnimals = animalEmojis
             .OrderBy(item => random.Next())
             .ToList();
         matchesFound = 0;
         // Reset the timer when game is setup
-        tenthsOfSecondsElapsed = 0;
+        tenthsOfSecondsElapsed = 100;
     }
 
     // Event handler section
@@ -96,7 +125,7 @@
             // Start the timer on first button click
             timer.Start();
         }
-        else if ((lastAnimalFound == animal)&&(animalDescription != lastDescription))
+        else if ((lastAnimalFound == animal) && (animalDescription != lastDescription))
         {
             // Match found! Reset for next pair
             lastAnimalFound = string.Empty;
@@ -106,11 +135,13 @@
                 .Select(a => a.Replace(animal, string.Empty))
                 .ToList();
             matchesFound++;
-            if(matchesFound == 8)
+            if (matchesFound == 8)
             {
+                listCount++;
                 // Stop the timer & display a message
                 timer.Stop();
                 timeDisplay += "- Play Again?";
+
                 SetUpGame();
             }
         }
@@ -127,10 +158,20 @@
     {
         InvokeAsync(() =>
         {
-            tenthsOfSecondsElapsed++;
-            timeDisplay = (tenthsOfSecondsElapsed / 10F)
-                .ToString("0.0s");
-            StateHasChanged();
+            if (tenthsOfSecondsElapsed == 0)
+            {
+                timer.Stop();
+                SetUpGame();
+                
+            }
+            else
+            {
+                tenthsOfSecondsElapsed--;
+                timeDisplay = (tenthsOfSecondsElapsed / 10F)
+                    .ToString("0.0s");
+                StateHasChanged();
+            }
+
         });
     }
 }
