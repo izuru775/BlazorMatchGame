@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using System.Timers
 
 <style>
     .container {
@@ -29,6 +30,10 @@
     <div class="row">
         <h2>Match found:@matchesFound</h2>
     </div>
+    <br />
+    <div class="row">
+        <h2>Time:@timeDisplay</h2>
+    </div>
 </div>
 
 
@@ -50,9 +55,17 @@
     List<string> shuffledAnimals = new List<string>();
 
     int matchesFound = 0;
+    // Timer related variables
+    Timer timer;
+    int tenthsOfSecondsElapsed = 0;
+    string timeDisplay;
 
     protected override void OnInitialized()
     {
+        // Telling timer how frequently to tick and what method to call
+        timer = new Timer(100);
+        timer.Elapsed += Timer_Tick;
+
         SetUpGame();
     }
     private void SetUpGame()
@@ -63,6 +76,8 @@
             .OrderBy(item => random.Next())
             .ToList();
         matchesFound = 0;
+        // Reset the timer when game is setup
+        tenthsOfSecondsElapsed = 0;
     }
 
     // Event handler section
@@ -77,6 +92,9 @@
             // First section of the pair
             lastAnimalFound = animal;
             lastDescription = animalDescription;
+
+            // Start the timer on first button click
+            timer.Start();
         }
         else if ((lastAnimalFound == animal)&&(animalDescription != lastDescription))
         {
@@ -90,6 +108,9 @@
             matchesFound++;
             if(matchesFound == 8)
             {
+                // Stop the timer & display a message
+                timer.Stop();
+                timeDisplay += "- Play Again?";
                 SetUpGame();
             }
         }
@@ -101,4 +122,15 @@
         }
     }
 
+    // Tick event handler for timer
+    private void Timer_Tick(Object source, ElapsedEventArgs e)
+    {
+        InvokeAsync(() =>
+        {
+            tenthsOfSecondsElapsed++;
+            timeDisplay = (tenthsOfSecondsElapsed / 10F)
+                .ToString("0.0s");
+            StateHasChanged();
+        });
+    }
 }
